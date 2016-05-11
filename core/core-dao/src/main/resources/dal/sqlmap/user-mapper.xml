@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd" >
+<mapper namespace="USER">
+	<resultMap id="BaseResultMap" type="UserDO">
+		<result column="id" property="id" jdbcType="INTEGER" />
+		<result column="login_name" property="loginName" jdbcType="VARCHAR" />
+		<result column="password" property="passwd" jdbcType="VARCHAR" />
+		<result column="mobile" property="mobile" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<sql id="User_Base_Column_List">
+		u.id, u.login_name,u.password,u.mobile
+	</sql>
+	
+	<select id="selectUserByLoginName" parameterType="java.lang.String"
+		resultMap="BaseResultMap">
+		select
+		<include refid="User_Base_Column_List" />
+		from order_user u
+		where u.login_name = #{loginName,jdbcType=VARCHAR}
+	</select>
+	
+</mapper>

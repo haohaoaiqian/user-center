@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="demo"  basedir=".">
+	
+    <!-- Initialization -->
+	<property name="keyfile" location="${user.home}/.ssh/id_rsa" />
+	<property name="remote.ip" value="1.1.1.1" />
+	<property name="remote.port" value="22" />
+	<property name="remote.username" value="root" />
+	<property name="remote.tomcat" value="/home/${project.name}" />
+	<property name="remote.backup" value="/opt/backup" />
+
+	<tstamp>
+		<format property="date" pattern="yyyyMMddHHmm"/>
+	</tstamp>
+
+    <!-- =================================================================== -->
+    <!-- backup wars on site                                                 -->
+    <!-- =================================================================== -->
+	<target name="bak_remote">
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" trust="yes"
+				 command ="if [ -d ${remote.tomcat}/webapps/ROOT   ] ;
+						   then
+                           cd ${remote.tomcat}/webapps &amp;&amp;
+						   tar -zcvf ${remote.backup}/${project.name}-${date}.tar.gz ROOT ;
+                           fi ; " />
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="sleep 10" trust="yes"/>
+	</target>
+
+    <!-- =================================================================== -->
+    <!-- install and uninstall                                               -->
+    <!-- =================================================================== -->
+	<target name="replacefiles_scp" >
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="rm -rf ${remote.tomcat}/webapps/ROOT" trust="yes"/>
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="sleep 2" trust="yes"/>
+		<scp file="../${project.name}.war" port="${remote.port}" keyfile="${keyfile}" todir="${remote.username}@${remote.ip}:~/" trust="yes"/>
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="mkdir ${remote.tomcat}/webapps/ROOT;cd ${remote.tomcat}/webapps/ROOT;/apps/product/jdk1.6.0_45/bin/jar -xvf ~/${project.name}.war" trust="yes"/>
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="rm -rf ~/${project.name}.war" trust="yes"/>
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="sleep 10" trust="yes"/>
+	</target>
+
+	<!-- =================================================================== -->
+    <!-- stop and start tomcat                                                  -->
+    <!-- =================================================================== -->
+	<target name="stop_tomcat">
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="
+		source /etc/profile;
+		sleep 10;
+		ps -ef|grep java |grep ${remote.tomcat}/| grep -v grep |awk '{print $2}' | xargs kill -9;
+		sleep 10;
+		rm -rf ${remote.tomcat}/work/Catalina;
+		sleep 10" trust="yes" failonerror="false"/>
+	</target>
+
+	<target name="start_tomcat">
+		<sshexec host="${remote.ip}" username="${remote.username}" port="${remote.port}" keyfile="${keyfile}" command="source /etc/profile;
+		sleep 10;
+		${remote.tomcat}/bin/startup.sh;
+		sleep 10" trust="yes"/>
+	</target>	
+	
+	<target name="release" depends="stop_tomcat,bak_remote,replacefiles_scp,start_tomcat"/>
+
+</project>

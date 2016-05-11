@@ -1,0 +1,9 @@
+# persistence configration
+jrgc.xx.jdbc.url=${jrgc.xx.jdbc.url}
+jrgc.xx.jdbc.username=${jrgc.xx.jdbc.username}
+jrgc.xx.jdbc.password=${jrgc.xx.jdbc.password}
+
+# dubbo configration
+dubbo.registry=${dubbo.registry}
+dubbo.xx.service.port=${dubbo.xx.service.port}
+dubbo.user.service.version=${dubbo.user.service.version}
